@@ -1,7 +1,7 @@
 [project]
-name = "new"
+name = "feedhub"
 version = "0.1.0"
-description = "Add your description here"
+description = "A full-stack social media application for sharing images and connecting with others"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
