@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Header } from '@/components/organisms'
+import { Header, Sidebar } from '@/components/organisms'
 import { cn } from '@/lib/utils'
 
 interface ProfileLayoutProps {
@@ -12,6 +12,8 @@ interface ProfileLayoutProps {
   className?: string
   profileClassName?: string
   feedClassName?: string
+  showSidebar?: boolean
+  sidebarCollapsed?: boolean
 }
 
 function ProfileLayout({
@@ -22,6 +24,8 @@ function ProfileLayout({
   className,
   profileClassName,
   feedClassName,
+  showSidebar = true,
+  sidebarCollapsed = false,
 }: ProfileLayoutProps) {
   return (
     <div className="flex h-screen w-full flex-col bg-background">
@@ -29,29 +33,30 @@ function ProfileLayout({
       <Header {...headerProps} />
 
       {/* Main Content */}
-      <div className={cn('flex-1 overflow-y-auto', className)}>
-        {/* Profile Hero Section */}
-        <div className="w-full border-b">{profileSection}</div>
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Sidebar - Navigation */}
+        {showSidebar && <Sidebar collapsed={sidebarCollapsed} />}
 
-        {/* Profile Content Area */}
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 p-4 md:p-6">
-            {/* Left Sidebar - Profile Widget */}
-            <aside className={cn('md:col-span-1', profileClassName)}>
-              {profileSection}
-            </aside>
+        {/* Main Feed */}
+        <main className={cn('flex-1 overflow-y-auto', className)}>
+          {/* Profile Hero Section */}
+          <div className="w-full border-b">{profileSection}</div>
 
-            {/* Main Feed */}
-            <main className={cn('md:col-span-3', feedClassName)}>
-              {feedSection}
-            </main>
+          {/* Profile Content Area */}
+          <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 p-4 md:p-6">
+              {/* Profile Widget */}
+              <aside className={cn('md:col-span-1', profileClassName)}>
+                {feedSection}
+              </aside>
+
+              {/* Main Content */}
+              <div className={cn('md:col-span-3', feedClassName)}>
+                {children}
+              </div>
+            </div>
           </div>
-        </div>
-
-        {/* Additional Children */}
-        {children && (
-          <div className="max-w-7xl mx-auto p-4 md:p-6">{children}</div>
-        )}
+        </main>
       </div>
     </div>
   )

@@ -14,8 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'Feed Hub',
-  description:
-    'A full-stack social media application for sharing images and connecting with others',
+  description: 'Media Gallery Management System',
 }
 
 export default function RootLayout({
