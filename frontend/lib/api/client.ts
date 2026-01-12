@@ -99,6 +99,23 @@ async function apiRequest<T>(
       errorData = { detail: 'An unexpected error occurred' }
     }
 
+    // Handle 401 Unauthorized - likely expired token
+    if (response.status === 401) {
+      clearToken()
+      // Redirect to login if in browser
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login'
+      }
+      return {
+        success: false,
+        error: {
+          status: 401,
+          message: 'Session expired. Please login again.',
+          detail: errorData.detail,
+        },
+      }
+    }
+
     return {
       success: false,
       error: {

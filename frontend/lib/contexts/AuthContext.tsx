@@ -39,6 +39,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initAuth()
   }, [])
 
+  // Set up periodic token validation (every 5 minutes)
+  useEffect(() => {
+    if (!isAuthenticated) return
+
+    const tokenCheckInterval = setInterval(async () => {
+      if (authAPI.isAuthenticated()) {
+        // Attempt to validate token by fetching user data
+        const response = await authAPI.getCurrentUser()
+        if (!response.success) {
+          // Token is invalid, logout user
+          logout()
+        }
+      }
+    }, 5 * 60 * 1000) // 5 minutes
+
+    return () => clearInterval(tokenCheckInterval)
+  }, [isAuthenticated])
+
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       setIsLoading(true)
