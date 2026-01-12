@@ -1,8 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Header } from '@/components/organisms'
-import { Sidebar } from '@/components/organisms'
+import { Header, Sidebar, Footer } from '@/components/organisms'
 import { cn } from '@/lib/utils'
 
 interface MainLayoutProps {
@@ -37,6 +36,9 @@ function MainLayout({
           {children}
         </main>
       </div>
+
+      {/* Footer */}
+      <Footer />
     </div>
   )
 }

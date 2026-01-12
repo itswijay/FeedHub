@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Header, Sidebar } from '@/components/organisms'
+import { Header, Sidebar, Footer } from '@/components/organisms'
 import { cn } from '@/lib/utils'
 
 interface FeedLayoutProps {
@@ -57,6 +57,9 @@ function FeedLayout({
           </aside>
         )}
       </div>
+
+      {/* Footer */}
+      <Footer />
     </div>
   )
 }

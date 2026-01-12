@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Header, Sidebar } from '@/components/organisms'
+import { Header, Sidebar, Footer } from '@/components/organisms'
 import { cn } from '@/lib/utils'
 
 interface ProfileLayoutProps {
@@ -58,6 +58,9 @@ function ProfileLayout({
           </div>
         </main>
       </div>
+
+      {/* Footer */}
+      <Footer />
     </div>
   )
 }
