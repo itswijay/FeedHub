@@ -1,14 +1,15 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { AuthLayout } from '@/components/templates'
 import { Button, Input, Label, FormItem } from '@/components/atoms'
 import { useForm } from 'react-hook-form'
 import { Eye, EyeOff, Check } from 'lucide-react'
+import { useAuth } from '@/lib/contexts/AuthContext'
 
 interface SignupFormData {
-  name: string
   email: string
   password: string
   confirmPassword: string
@@ -17,7 +18,9 @@ interface SignupFormData {
 export default function SignupPage() {
   const [showPassword, setShowPassword] = React.useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false)
-  const [isLoading, setIsLoading] = React.useState(false)
+  const [serverError, setServerError] = useState<string | null>(null)
+  const { signup, isLoading } = useAuth()
+  const router = useRouter()
   const {
     register,
     handleSubmit,
@@ -27,13 +30,21 @@ export default function SignupPage() {
   const password = watch('password')
 
   const onSubmit = async (data: SignupFormData) => {
-    setIsLoading(true)
+    setServerError(null)
     try {
-      // TODO: Call signup API
-      console.log('Signup attempt:', data)
-      alert('Signup functionality to be implemented')
-    } finally {
-      setIsLoading(false)
+      const success = await signup(data.email, data.password)
+      if (success) {
+        // Redirect to feed page on successful signup
+        router.push('/')
+      } else {
+        setServerError('Signup failed. Please try again.')
+      }
+    } catch (error) {
+      setServerError(
+        error instanceof Error
+          ? error.message
+          : 'An error occurred during signup'
+      )
     }
   }
 
@@ -52,28 +63,12 @@ export default function SignupPage() {
       subtitle="Join FeedHub and start sharing!"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* Name Field */}
-        <FormItem>
-          <Label htmlFor="name">Full Name</Label>
-          <Input
-            id="name"
-            type="text"
-            placeholder="John Doe"
-            {...register('name', {
-              required: 'Name is required',
-              minLength: {
-                value: 2,
-                message: 'Name must be at least 2 characters',
-              },
-            })}
-            disabled={isLoading}
-          />
-          {errors.name && (
-            <p className="text-destructive text-sm mt-1">
-              {errors.name.message}
-            </p>
-          )}
-        </FormItem>
+        {/* Server Error Message */}
+        {serverError && (
+          <div className="bg-destructive/10 text-destructive p-3 rounded-md text-sm">
+            {serverError}
+          </div>
+        )}
 
         {/* Email Field */}
         <FormItem>

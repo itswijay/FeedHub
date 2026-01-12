@@ -1,11 +1,13 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { AuthLayout } from '@/components/templates'
 import { Button, Input, Label, FormItem } from '@/components/atoms'
 import { useForm } from 'react-hook-form'
 import { Eye, EyeOff } from 'lucide-react'
+import { useAuth } from '@/lib/contexts/AuthContext'
 
 interface LoginFormData {
   email: string
@@ -15,7 +17,9 @@ interface LoginFormData {
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = React.useState(false)
-  const [isLoading, setIsLoading] = React.useState(false)
+  const [serverError, setServerError] = useState<string | null>(null)
+  const { login, isLoading } = useAuth()
+  const router = useRouter()
   const {
     register,
     handleSubmit,
@@ -23,20 +27,33 @@ export default function LoginPage() {
   } = useForm<LoginFormData>()
 
   const onSubmit = async (data: LoginFormData) => {
-    setIsLoading(true)
+    setServerError(null)
     try {
-      // TODO: Call login API
-      console.log('Login attempt:', data)
-      alert('Login functionality to be implemented')
-    } finally {
-      setIsLoading(false)
+      const success = await login(data.email, data.password)
+      if (success) {
+        // Redirect to feed page on successful login
+        router.push('/')
+      } else {
+        setServerError('Invalid email or password')
+      }
+    } catch (error) {
+      setServerError(
+        error instanceof Error
+          ? error.message
+          : 'An error occurred during login'
+      )
     }
   }
 
   return (
     <AuthLayout title="Sign In" subtitle="Welcome back to FeedHub!">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* Email Field */}
+        {/* Server Error Message */}
+        {serverError && (
+          <div className="bg-destructive/10 text-destructive p-3 rounded-md text-sm">
+            {serverError}
+          </div>
+        )}
         <FormItem>
           <Label htmlFor="email">Email Address</Label>
           <Input

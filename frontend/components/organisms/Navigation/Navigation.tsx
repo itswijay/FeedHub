@@ -1,10 +1,11 @@
 'use client'
 
 import React from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { Button } from '@/components/atoms'
 import { cn } from '@/lib/utils'
-import { Home, Upload, Share2, User, MoreHorizontal } from 'lucide-react'
+import { Home, Upload, Share2, User, LogOut } from 'lucide-react'
+import { useAuth } from '@/lib/contexts/AuthContext'
 
 interface NavItem {
   label: string
@@ -89,13 +90,19 @@ function Sidebar({
   className,
 }: SidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
+  const { logout, user } = useAuth()
   const [mounted, setMounted] = React.useState(false)
 
   React.useEffect(() => {
     setMounted(true)
   }, [])
 
-  const navItems: NavItem[] = [
+  const handleLogout = () => {
+    logout()
+    router.push('/login')
+    onLogout?.()
+  }
     {
       label: 'Home',
       icon: <Home className="size-5" />,
@@ -142,10 +149,10 @@ function Sidebar({
             'justify-start gap-4 w-full',
             collapsed && 'justify-center'
           )}
-          onClick={onLogout}
+          onClick={handleLogout}
         >
-          <MoreHorizontal className="size-5" />
-          {!collapsed && 'More'}
+          <LogOut className="size-5" />
+          {!collapsed && 'Logout'}
         </Button>
       </div>
     </aside>
