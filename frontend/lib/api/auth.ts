@@ -55,6 +55,12 @@ export const authAPI = {
     if (response.ok) {
       const data: LoginResponse = await response.json()
       API.setToken(data.access_token)
+
+      // Set auth token as a cookie for middleware access
+      document.cookie = `authToken=${data.access_token}; path=/; max-age=${
+        60 * 60 * 24 * 7
+      }; SameSite=Lax`
+
       return {
         success: true,
         data,
@@ -92,6 +98,8 @@ export const authAPI = {
    */
   logout: () => {
     API.clearToken()
+    // Clear the auth token cookie
+    document.cookie = 'authToken=; path=/; max-age=0; SameSite=Lax'
     return {
       success: true,
     }

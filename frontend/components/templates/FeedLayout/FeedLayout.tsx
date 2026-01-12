@@ -23,7 +23,6 @@ function FeedLayout({
   showSidebar = true,
   sidebarCollapsed = false,
   headerProps,
-  className,
   feedClassName,
   sidebarClassName,
 }: FeedLayoutProps) {

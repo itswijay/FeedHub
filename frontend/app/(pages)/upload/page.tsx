@@ -12,9 +12,11 @@ import {
   CardTitle,
 } from '@/components/atoms'
 import { postsAPI } from '@/lib/api'
+import { useToast } from '@/lib/contexts/ToastContext'
 
 export default function UploadPage() {
   const router = useRouter()
+  const { showToast } = useToast()
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
@@ -36,9 +38,13 @@ export default function UploadPage() {
         )
 
         if (!response.success) {
-          setError(response.error?.message || 'Upload failed')
+          const errorMsg = response.error?.message || 'Upload failed'
+          setError(errorMsg)
+          showToast(errorMsg, 'error')
           break
         }
+
+        showToast(`Uploaded ${file.name}`, 'success')
 
         // Update progress
         setUploadProgress(Math.round(((i + 1) / files.length) * 100))
@@ -46,15 +52,17 @@ export default function UploadPage() {
 
       if (files.length > 0 && !error) {
         setSuccess(true)
+        showToast('All files uploaded successfully!', 'success')
         // Redirect to feed after successful upload
         setTimeout(() => {
           router.push('/')
         }, 2000)
       }
     } catch (err) {
-      setError(
+      const errorMsg =
         err instanceof Error ? err.message : 'An error occurred during upload'
-      )
+      setError(errorMsg)
+      showToast(errorMsg, 'error')
     } finally {
       setIsUploading(false)
     }

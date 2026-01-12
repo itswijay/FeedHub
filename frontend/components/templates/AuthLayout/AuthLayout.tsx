@@ -12,7 +12,7 @@ interface AuthLayoutProps {
 
 function AuthLayout({ children, title, subtitle, className }: AuthLayoutProps) {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
+    <div className="min-h-screen w-full flex items-center justify-center bg-linear-to-br from-primary/10 via-background to-accent/10 p-4">
       <div className={cn('w-full max-w-md space-y-8', className)}>
         {/* Logo/Branding */}
         <div className="text-center space-y-2">

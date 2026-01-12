@@ -7,6 +7,7 @@ import { MediaFilter } from '@/components/molecules'
 import { ConfirmDialog } from '@/lib/components/ConfirmDialog'
 import { postsAPI, Post } from '@/lib/api'
 import { useAuth } from '@/lib/contexts/AuthContext'
+import { useToast } from '@/lib/contexts/ToastContext'
 
 interface MediaItem {
   id: string
@@ -20,6 +21,7 @@ interface MediaItem {
 
 export default function DashboardPage() {
   const { isAuthenticated } = useAuth()
+  const { showToast } = useToast()
   const [mediaItems, setMediaItems] = React.useState<MediaItem[]>([])
   const [filteredItems, setFilteredItems] = React.useState<MediaItem[]>([])
   const [searchQuery, setSearchQuery] = React.useState('')
@@ -135,13 +137,16 @@ export default function DashboardPage() {
           prev.filter((item) => item.id !== deleteConfirm.postId)
         )
         setDeleteConfirm({ isOpen: false, postId: '' })
+        showToast('Post deleted successfully', 'success')
       } else {
         setError(response.error?.message || 'Failed to delete post')
+        showToast(response.error?.message || 'Failed to delete post', 'error')
       }
     } catch (err) {
-      setError(
+      const message =
         err instanceof Error ? err.message : 'An error occurred during deletion'
-      )
+      setError(message)
+      showToast(message, 'error')
     } finally {
       setIsDeleting(false)
     }

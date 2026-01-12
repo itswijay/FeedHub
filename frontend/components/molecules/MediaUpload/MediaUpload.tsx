@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Card, Button, Input } from '@/components/atoms'
+import { Card, Button } from '@/components/atoms'
 import { Upload, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 

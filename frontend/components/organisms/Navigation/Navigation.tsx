@@ -103,6 +103,8 @@ function Sidebar({
     router.push('/login')
     onLogout?.()
   }
+
+  const navItems: NavItem[] = [
     {
       label: 'Home',
       icon: <Home className="size-5" />,
