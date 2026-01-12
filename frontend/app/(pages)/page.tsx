@@ -1,55 +1,81 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { FeedLayout } from '@/components/templates'
 import { MediaGallery } from '@/components/organisms'
 import { MediaFilter } from '@/components/molecules'
+import { ConfirmDialog } from '@/lib/components/ConfirmDialog'
+import { postsAPI, Post } from '@/lib/api'
+import { useAuth } from '@/lib/contexts/AuthContext'
 
-// Mock media data
-const mockMediaItems = [
-  {
-    id: '1',
-    thumbnail:
-      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&h=400&fit=crop',
-    title: 'Beautiful Ocean Waves',
-    uploadedAt: 'Jan 10, 2024',
-    size: '2.4 MB',
-    type: 'image' as const,
-  },
-  {
-    id: '2',
-    thumbnail:
-      'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=400&fit=crop',
-    title: 'Mountain Peak Adventure',
-    uploadedAt: 'Jan 8, 2024',
-    size: '3.1 MB',
-    type: 'image' as const,
-  },
-  {
-    id: '3',
-    thumbnail:
-      'https://images.unsplash.com/photo-1511379938547-c1f69b13d835?w=400&h=400&fit=crop',
-    title: 'Sunset Photography',
-    uploadedAt: 'Jan 5, 2024',
-    size: '2.8 MB',
-    type: 'image' as const,
-  },
-  {
-    id: '4',
-    thumbnail:
-      'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=400&fit=crop',
-    title: 'Forest Trail Video',
-    uploadedAt: 'Jan 1, 2024',
-    size: '45.2 MB',
-    type: 'video' as const,
-  },
-]
+interface MediaItem {
+  id: string
+  thumbnail: string
+  title: string
+  uploadedAt?: string
+  size?: string
+  type?: 'image' | 'video' | 'document'
+  postId?: string
+}
 
 export default function DashboardPage() {
-  const [mediaItems, setMediaItems] = React.useState(mockMediaItems)
-  const [filteredItems, setFilteredItems] = React.useState(mockMediaItems)
+  const { isAuthenticated } = useAuth()
+  const [mediaItems, setMediaItems] = React.useState<MediaItem[]>([])
+  const [filteredItems, setFilteredItems] = React.useState<MediaItem[]>([])
   const [searchQuery, setSearchQuery] = React.useState('')
   const [selectedType, setSelectedType] = React.useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    isOpen: boolean
+    postId: string
+  }>({
+    isOpen: false,
+    postId: '',
+  })
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  // Fetch feed data on mount
+  useEffect(() => {
+    const fetchFeed = async () => {
+      if (!isAuthenticated) return
+
+      try {
+        setIsLoading(true)
+        setError(null)
+        const response = await postsAPI.getFeed()
+
+        if (response.success && response.data?.posts) {
+          const posts = response.data.posts
+          const items: MediaItem[] = posts.map((post: Post) => ({
+            id: post.id,
+            thumbnail: post.url,
+            title: post.caption || 'Untitled',
+            uploadedAt: new Date(post.created_at).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+            }),
+            type: (post.file_type === 'video' ? 'video' : 'image') as
+              | 'image'
+              | 'video'
+              | 'document',
+            postId: post.id,
+          }))
+          setMediaItems(items)
+          setFilteredItems(items)
+        } else {
+          setError(response.error?.message || 'Failed to load feed')
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchFeed()
+  }, [isAuthenticated])
 
   const handleSearch = (query: string) => {
     setSearchQuery(query)
@@ -92,9 +118,33 @@ export default function DashboardPage() {
     // TODO: Open share dialog
   }
 
-  const handleDelete = (id: string) => {
-    setMediaItems((prev) => prev.filter((item) => item.id !== id))
-    setFilteredItems((prev) => prev.filter((item) => item.id !== id))
+  const handleDeleteClick = (id: string) => {
+    setDeleteConfirm({ isOpen: true, postId: id })
+  }
+
+  const handleDeleteConfirm = async () => {
+    try {
+      setIsDeleting(true)
+      const response = await postsAPI.deletePost(deleteConfirm.postId)
+
+      if (response.success) {
+        setMediaItems((prev) =>
+          prev.filter((item) => item.id !== deleteConfirm.postId)
+        )
+        setFilteredItems((prev) =>
+          prev.filter((item) => item.id !== deleteConfirm.postId)
+        )
+        setDeleteConfirm({ isOpen: false, postId: '' })
+      } else {
+        setError(response.error?.message || 'Failed to delete post')
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'An error occurred during deletion'
+      )
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   const handleSortChange = (sort: string) => {
@@ -103,29 +153,50 @@ export default function DashboardPage() {
   }
 
   return (
-    <FeedLayout
-      mainFeed={
-        <div className="space-y-6">
-          <MediaFilter
-            onSearch={handleSearch}
-            onTypeFilter={handleTypeFilter}
-            onSortChange={handleSortChange}
-          />
-          <div>
-            <h1 className="text-2xl font-bold">My Gallery</h1>
-            <p className="text-muted-foreground">
-              {filteredItems.length} media files
-            </p>
+    <>
+      <FeedLayout
+        mainFeed={
+          <div className="space-y-6">
+            {error && (
+              <div className="bg-destructive/10 text-destructive p-4 rounded-md text-sm">
+                {error}
+              </div>
+            )}
+            <MediaFilter
+              onSearch={handleSearch}
+              onTypeFilter={handleTypeFilter}
+              onSortChange={handleSortChange}
+            />
+            <div>
+              <h1 className="text-2xl font-bold">Feed</h1>
+              <p className="text-muted-foreground">
+                {isLoading ? 'Loading...' : `${filteredItems.length} posts`}
+              </p>
+            </div>
+            <MediaGallery
+              items={filteredItems}
+              loading={isLoading}
+              onView={handleView}
+              onDownload={handleDownload}
+              onShare={handleShare}
+              onDelete={handleDeleteClick}
+            />
           </div>
-          <MediaGallery
-            items={filteredItems}
-            onView={handleView}
-            onDownload={handleDownload}
-            onShare={handleShare}
-            onDelete={handleDelete}
-          />
-        </div>
-      }
-    />
+        }
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        title="Delete Post"
+        description="Are you sure you want to delete this post? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDangerous={true}
+        isLoading={isDeleting}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteConfirm({ isOpen: false, postId: '' })}
+      />
+    </>
   )
 }

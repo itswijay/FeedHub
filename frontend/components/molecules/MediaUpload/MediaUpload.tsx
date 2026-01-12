@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 interface MediaUploadProps {
   onUpload?: (files: File[]) => void | Promise<void>
   multiple?: boolean
+  disabled?: boolean
   acceptTypes?: string
   maxSize?: number
   className?: string
@@ -16,6 +17,7 @@ interface MediaUploadProps {
 function MediaUpload({
   onUpload,
   multiple = true,
+  disabled = false,
   acceptTypes = 'image/*,video/*',
   maxSize = 50 * 1024 * 1024, // 50MB
   className,
@@ -76,6 +78,7 @@ function MediaUpload({
         onDrop={handleDrop}
         className={cn(
           'border-2 border-dashed rounded-lg p-8 text-center transition-colors',
+          disabled ? 'opacity-50 cursor-not-allowed' : '',
           dragActive
             ? 'border-primary bg-primary/5'
             : 'border-muted-foreground/25'
@@ -91,6 +94,7 @@ function MediaUpload({
           multiple={multiple}
           accept={acceptTypes}
           onChange={handleChange}
+          disabled={disabled}
           className="hidden"
         />
 
@@ -98,6 +102,7 @@ function MediaUpload({
           type="button"
           variant="outline"
           onClick={() => inputRef.current?.click()}
+          disabled={disabled}
         >
           Select Files
         </Button>
@@ -115,14 +120,19 @@ function MediaUpload({
               <span className="truncate">{file.name}</span>
               <button
                 onClick={() => removeFile(index)}
-                className="text-muted-foreground hover:text-foreground"
+                disabled={disabled}
+                className="text-muted-foreground hover:text-foreground disabled:opacity-50"
               >
                 <X className="size-4" />
               </button>
             </div>
           ))}
 
-          <Button onClick={handleUpload} className="w-full mt-4">
+          <Button
+            onClick={handleUpload}
+            disabled={disabled}
+            className="w-full mt-4"
+          >
             Upload {selectedFiles.length} File
             {selectedFiles.length !== 1 ? 's' : ''}
           </Button>

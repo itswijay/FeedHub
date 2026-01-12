@@ -8,10 +8,16 @@ import { cn } from '@/lib/utils'
 interface UploadFormProps {
   onUpload?: (files: File[]) => void | Promise<void>
   multiple?: boolean
+  disabled?: boolean
   className?: string
 }
 
-function UploadForm({ onUpload, multiple = true, className }: UploadFormProps) {
+function UploadForm({
+  onUpload,
+  multiple = true,
+  disabled = false,
+  className,
+}: UploadFormProps) {
   const handleUpload = async (files: File[]) => {
     console.log('Uploading files:', files)
     await onUpload?.(files)
@@ -26,6 +32,7 @@ function UploadForm({ onUpload, multiple = true, className }: UploadFormProps) {
         <MediaUpload
           onUpload={handleUpload}
           multiple={multiple}
+          disabled={disabled}
           acceptTypes="image/*,video/*"
           maxSize={100 * 1024 * 1024} // 100MB
         />
