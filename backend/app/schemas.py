@@ -19,7 +19,6 @@ class PostResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class UploadResponse(BaseModel):
-    """Response schema for file upload endpoint"""
     id: uuid.UUID
     user_id: uuid.UUID
     caption: str

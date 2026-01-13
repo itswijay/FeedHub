@@ -24,11 +24,10 @@ app = FastAPI(
     version="0.1.0"
 )
 
-# Configure CORS middleware for frontend integration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",  # Next.js development server
+        "http://localhost:3000",
         "http://127.0.0.1:3000",
     ],
     allow_credentials=True,
@@ -77,9 +76,9 @@ async def upload_file(
     """
     Upload a media file (image or video) with optional caption.
     
-    - **file**: The media file to upload
-    - **caption**: Optional description for the media
-    - **Returns**: Post object with file details and metadata
+    - file: The media file to upload
+    - caption: Optional description for the media
+    - Returns: Post object with file details and metadata
     """
     
     temp_file_path = None
@@ -126,7 +125,7 @@ async def get_feed(
     """
     Retrieve all posts belonging to the current user ordered by creation date (newest first).
     
-    - **Returns**: List of posts owned by the authenticated user
+    - Returns: List of posts owned by the authenticated user
     """
     result = await session.execute(
         select(Post)
@@ -156,11 +155,11 @@ async def update_post(post_id: str, caption: str = Form(...), session: AsyncSess
     """
     Update a post's caption. Only the post owner can update their post.
     
-    - **post_id**: UUID of the post to update
-    - **caption**: New caption text
-    - **Returns**: Updated post object
-    - **403 Forbidden**: If user is not the post owner
-    - **404 Not Found**: If post does not exist
+    - post_id: UUID of the post to update
+    - caption: New caption text
+    - Returns: Updated post object
+    - 403 Forbidden: If user is not the post owner
+    - 404 Not Found: If post does not exist
     """
     try:
         try:
@@ -195,10 +194,10 @@ async def delete_post(post_id: str, session: AsyncSession = Depends(get_async_se
     """
     Delete a post by ID. Only the post owner can delete their post.
     
-    - **post_id**: UUID of the post to delete
-    - **Returns**: Success message if deletion was successful
-    - **403 Forbidden**: If user is not the post owner
-    - **404 Not Found**: If post does not exist
+    - post_id: UUID of the post to delete
+    - Returns: Success message if deletion was successful
+    - 403 Forbidden: If user is not the post owner
+    - 404 Not Found: If post does not exist
     """
     try:
         post_uuid = uuid.UUID(post_id)
