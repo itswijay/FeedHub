@@ -8,8 +8,15 @@ class PostCreate(BaseModel):
     content: str
 
 class PostResponse(BaseModel):
-    title: str
-    content: str
+    id: uuid.UUID
+    user_id: uuid.UUID
+    caption: str
+    url: str
+    file_type: str
+    file_name: str
+    created_at: datetime
+    
+    model_config = ConfigDict(from_attributes=True)
 
 class UploadResponse(BaseModel):
     """Response schema for file upload endpoint"""

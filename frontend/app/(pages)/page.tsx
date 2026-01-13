@@ -38,6 +38,16 @@ export default function DashboardPage() {
     postId: '',
   })
   const [isDeleting, setIsDeleting] = useState(false)
+  const [editDialog, setEditDialog] = useState<{
+    isOpen: boolean
+    postId: string
+    caption: string
+  }>({
+    isOpen: false,
+    postId: '',
+    caption: '',
+  })
+  const [isEditing, setIsEditing] = useState(false)
 
   // Fetch feed data on mount
   useEffect(() => {
@@ -188,6 +198,53 @@ export default function DashboardPage() {
     setDeleteConfirm({ isOpen: true, postId: id })
   }
 
+  const handleEditClick = (id: string) => {
+    const item = mediaItems.find((m) => m.id === id)
+    if (item) {
+      setEditDialog({ isOpen: true, postId: id, caption: item.title })
+    }
+  }
+
+  const handleEditConfirm = async () => {
+    try {
+      setIsEditing(true)
+      const response = await postsAPI.updateCaption(
+        editDialog.postId,
+        editDialog.caption
+      )
+
+      if (response.success) {
+        // Update the media items with the new caption
+        setMediaItems((prev) =>
+          prev.map((item) =>
+            item.id === editDialog.postId
+              ? { ...item, title: editDialog.caption }
+              : item
+          )
+        )
+        setFilteredItems((prev) =>
+          prev.map((item) =>
+            item.id === editDialog.postId
+              ? { ...item, title: editDialog.caption }
+              : item
+          )
+        )
+        setEditDialog({ isOpen: false, postId: '', caption: '' })
+        showToast('Caption updated successfully', 'success')
+      } else {
+        showToast(
+          response.error?.message || 'Failed to update caption',
+          'error'
+        )
+      }
+    } catch (err) {
+      showToast('Failed to update caption', 'error')
+      console.error('Edit error:', err)
+    } finally {
+      setIsEditing(false)
+    }
+  }
+
   const handleDeleteConfirm = async () => {
     try {
       setIsDeleting(true)
@@ -243,6 +300,7 @@ export default function DashboardPage() {
               onView={handleView}
               onDownload={handleDownload}
               onDelete={handleDeleteClick}
+              onEdit={handleEditClick}
             />
           </div>
         }
@@ -260,6 +318,41 @@ export default function DashboardPage() {
         onConfirm={handleDeleteConfirm}
         onCancel={() => setDeleteConfirm({ isOpen: false, postId: '' })}
       />
+
+      {/* Edit Caption Dialog */}
+      {editDialog.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-background rounded-lg p-6 w-96 shadow-lg">
+            <h2 className="text-xl font-semibold mb-4">Edit Caption</h2>
+            <input
+              type="text"
+              value={editDialog.caption}
+              onChange={(e) =>
+                setEditDialog({ ...editDialog, caption: e.target.value })
+              }
+              className="w-full px-3 py-2 border border-input rounded-md mb-4"
+              placeholder="Enter new caption"
+            />
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() =>
+                  setEditDialog({ isOpen: false, postId: '', caption: '' })
+                }
+                className="px-4 py-2 rounded-md hover:bg-muted"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEditConfirm}
+                disabled={isEditing}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+              >
+                {isEditing ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

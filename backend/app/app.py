@@ -151,6 +151,45 @@ async def get_feed(
 
     return {'posts': posts_data}
 
+@app.put('/posts/{post_id}', summary="Update a post caption", tags=["posts"])
+async def update_post(post_id: str, caption: str = Form(...), session: AsyncSession = Depends(get_async_session), user: User = Depends(current_active_user)):
+    """
+    Update a post's caption. Only the post owner can update their post.
+    
+    - **post_id**: UUID of the post to update
+    - **caption**: New caption text
+    - **Returns**: Updated post object
+    - **403 Forbidden**: If user is not the post owner
+    - **404 Not Found**: If post does not exist
+    """
+    try:
+        try:
+            post_uuid = uuid.UUID(post_id)
+        except ValueError:
+            raise HTTPException(status_code=400, detail='Invalid post ID format')
+
+        result = await session.execute(select(Post).where(Post.id == post_uuid))
+        post = result.scalars().first()
+
+        if not post:
+            raise HTTPException(status_code=404, detail='Post not found')
+        
+        if post.user_id != user.id:
+            raise HTTPException(status_code=403, detail='You do not have permission to update this post')
+        
+        post.caption = caption
+        session.add(post)
+        await session.commit()
+        await session.refresh(post)
+
+        return PostResponse.model_validate(post)
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error updating post: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.delete('/posts/{post_id}', summary="Delete a post", tags=["posts"])
 async def delete_post(post_id: str, session: AsyncSession = Depends(get_async_session), user: User = Depends(current_active_user),):
     """

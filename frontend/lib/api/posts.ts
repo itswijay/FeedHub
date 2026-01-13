@@ -35,6 +35,12 @@ export interface DeleteResponse {
   message: string
 }
 
+export interface UpdateResponse {
+  id: string
+  caption: string
+  updated_at: string
+}
+
 export const postsAPI = {
   /**
    * Get all posts from the feed
@@ -61,6 +67,18 @@ export const postsAPI = {
     return API.postForm<UploadResponse>('/upload', formData, {
       onUploadProgress: onProgress,
     })
+  },
+
+  /**
+   * Update a post caption
+   * @param postId - UUID of the post to update
+   * @param caption - New caption text
+   */
+  updateCaption: async (postId: string, caption: string) => {
+    const formData = new FormData()
+    formData.append('caption', caption)
+
+    return API.putForm<UpdateResponse>(`/posts/${postId}`, formData)
   },
 
   /**

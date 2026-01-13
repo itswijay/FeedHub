@@ -315,6 +315,18 @@ export const API = {
     formData: FormData,
     options?: ApiRequestOptions
   ) => apiRequestWithProgress<T>(endpoint, formData, options),
+
+  putForm: <T>(
+    endpoint: string,
+    formData: FormData,
+    options?: ApiRequestOptions
+  ) =>
+    apiRequest<T>(endpoint, {
+      ...options,
+      method: 'PUT',
+      body: formData,
+      isFormData: true,
+    }),
 }
 
 export { API_BASE_URL }

@@ -29,6 +29,7 @@ interface MediaGalleryProps {
   onDownload?: (id: string) => void
   onShare?: (id: string) => void
   onDelete?: (id: string) => void
+  onEdit?: (id: string) => void
   columns?: number
   className?: string
 }
@@ -40,6 +41,7 @@ function MediaGallery({
   onDownload,
   onShare,
   onDelete,
+  onEdit,
   columns = 4,
   className,
 }: MediaGalleryProps) {
@@ -91,6 +93,7 @@ function MediaGallery({
           onDownload={() => onDownload?.(item.id)}
           onShare={() => onShare?.(item.id)}
           onDelete={() => onDelete?.(item.id)}
+          onEdit={() => onEdit?.(item.id)}
         />
       ))}
     </div>

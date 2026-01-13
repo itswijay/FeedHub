@@ -3,7 +3,7 @@
 import React from 'react'
 import Image from 'next/image'
 import { Card } from '@/components/atoms'
-import { Download, Trash2, Eye } from 'lucide-react'
+import { Download, Trash2, Eye, Edit2 } from 'lucide-react'
 import { Button } from '@/components/atoms'
 import { cn } from '@/lib/utils'
 
@@ -18,11 +18,12 @@ interface MediaCardProps {
   onDownload?: () => void
   onShare?: () => void
   onDelete?: () => void
+  onEdit?: () => void
   className?: string
 }
 
 function MediaCard({
-  // id,
+  id,
   thumbnail,
   title,
   uploadedAt,
@@ -32,6 +33,7 @@ function MediaCard({
   onDownload,
   // onShare,
   onDelete,
+  onEdit,
   className,
 }: MediaCardProps) {
   const [showActions, setShowActions] = React.useState(false)
@@ -69,6 +71,15 @@ function MediaCard({
               onClick={onView}
             >
               <Eye className="size-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="bg-white/20 hover:bg-white/40"
+              onClick={onEdit}
+              title="Edit caption"
+            >
+              <Edit2 className="size-4" />
             </Button>
             <Button
               size="icon"
