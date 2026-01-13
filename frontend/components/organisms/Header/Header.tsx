@@ -4,7 +4,7 @@ import React from 'react'
 import { SearchBar } from '@/components/molecules'
 import { Button } from '@/components/atoms'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/atoms'
-import { Menu, LogOut, Settings } from 'lucide-react'
+import { Menu, LogOut } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/contexts/AuthContext'
 import { cn } from '@/lib/utils'
@@ -14,7 +14,6 @@ interface HeaderProps {
   userAvatar?: string
   userName?: string
   onLogout?: () => void
-  onSettings?: () => void
   className?: string
 }
 
@@ -23,7 +22,6 @@ function Header({
   userAvatar,
   userName = 'User',
   onLogout,
-  onSettings,
   className,
 }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
@@ -85,17 +83,6 @@ function Header({
                 <div className="px-4 py-2 border-b text-sm font-medium">
                   {userName}
                 </div>
-
-                <button
-                  onClick={() => {
-                    onSettings?.()
-                    setIsMenuOpen(false)
-                  }}
-                  className="w-full flex items-center gap-2 px-4 py-2 hover:bg-muted text-sm"
-                >
-                  <Settings className="size-4" />
-                  Settings
-                </button>
 
                 <button
                   onClick={handleLogout}
