@@ -3,7 +3,7 @@
 import React from 'react'
 import Image from 'next/image'
 import { Card } from '@/components/atoms'
-import { Download, Share2, Trash2, Eye } from 'lucide-react'
+import { Download, Trash2, Eye } from 'lucide-react'
 import { Button } from '@/components/atoms'
 import { cn } from '@/lib/utils'
 
@@ -22,7 +22,7 @@ interface MediaCardProps {
 }
 
 function MediaCard({
-  id,
+  // id,
   thumbnail,
   title,
   uploadedAt,
@@ -30,7 +30,7 @@ function MediaCard({
   type = 'image',
   onView,
   onDownload,
-  onShare,
+  // onShare,
   onDelete,
   className,
 }: MediaCardProps) {
@@ -78,14 +78,14 @@ function MediaCard({
             >
               <Download className="size-4" />
             </Button>
-            <Button
+            {/* <Button
               size="icon"
               variant="ghost"
               className="bg-white/20 hover:bg-white/40"
               onClick={onShare}
             >
               <Share2 className="size-4" />
-            </Button>
+            </Button> */}
             <Button
               size="icon"
               variant="ghost"

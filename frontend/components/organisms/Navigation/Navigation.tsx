@@ -4,7 +4,7 @@ import React from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Button } from '@/components/atoms'
 import { cn } from '@/lib/utils'
-import { Home, Upload, Share2, User, LogOut } from 'lucide-react'
+import { Home, Upload, User, LogOut } from 'lucide-react'
 import { useAuth } from '@/lib/contexts/AuthContext'
 
 interface NavItem {
@@ -78,20 +78,14 @@ function Navigation({ items, collapsed = false, className }: NavigationProps) {
 // Sidebar - A specific layout of Navigation
 interface SidebarProps {
   onLogout?: () => void
-  userName?: string
   collapsed?: boolean
   className?: string
 }
 
-function Sidebar({
-  onLogout,
-  userName = 'User',
-  collapsed = false,
-  className,
-}: SidebarProps) {
+function Sidebar({ onLogout, collapsed = false, className }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const { logout, user } = useAuth()
+  const { logout } = useAuth()
   const [mounted, setMounted] = React.useState(false)
 
   React.useEffect(() => {
@@ -126,12 +120,12 @@ function Sidebar({
       href: '/upload',
       active: mounted && pathname === '/upload',
     },
-    {
-      label: 'Shared with Me',
-      icon: <Share2 className="size-5" />,
-      href: '/shared',
-      active: mounted && pathname === '/shared',
-    },
+    // {
+    //   label: 'Shared with Me',
+    //   icon: <Share2 className="size-5" />,
+    //   href: '/shared',
+    //   active: mounted && pathname === '/shared',
+    // },
     {
       label: 'Profile',
       icon: <User className="size-5" />,

@@ -50,8 +50,26 @@ export default function SharedPage() {
     setFilteredItems(mockSharedMedia)
   }
 
-  const handleDownload = (id: string) => {
-    console.log('Download shared media:', id)
+  const handleDownload = async (id: string) => {
+    const item = filteredItems.find((m) => m.id === id)
+    if (item && item.thumbnail) {
+      try {
+        const response = await fetch(item.thumbnail)
+        const blob = await response.blob()
+
+        const blobUrl = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = blobUrl
+        link.download = item.title || 'download'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+
+        window.URL.revokeObjectURL(blobUrl)
+      } catch (err) {
+        console.error('Download error:', err)
+      }
+    }
   }
 
   return (

@@ -149,13 +149,40 @@ export default function DashboardPage() {
   }
 
   const handleView = (id: string) => {
-    console.log('View media:', id)
-    // TODO: Navigate to media details page
+    // Find the media item to get the URL
+    const item = mediaItems.find((m) => m.id === id)
+    if (item) {
+      // Open in a new window/tab
+      window.open(item.thumbnail, '_blank')
+    }
   }
 
-  const handleDownload = (id: string) => {
-    console.log('Download media:', id)
-    // TODO: Implement download
+  const handleDownload = async (id: string) => {
+    // Find the media item to get the URL and filename
+    const post = mediaItems.find((m) => m.id === id)
+    if (post && post.thumbnail) {
+      try {
+        // Fetch the image as a blob
+        const response = await fetch(post.thumbnail)
+        const blob = await response.blob()
+
+        // Create a blob URL and download
+        const blobUrl = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = blobUrl
+        link.download = post.title || 'download'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+
+        // Clean up the blob URL
+        window.URL.revokeObjectURL(blobUrl)
+        showToast('Download started', 'success')
+      } catch (err) {
+        showToast('Failed to download file', 'error')
+        console.error('Download error:', err)
+      }
+    }
   }
 
   const handleDeleteClick = (id: string) => {

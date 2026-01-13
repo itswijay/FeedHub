@@ -77,16 +77,48 @@ export default function ProfilePage() {
     fetchUserPosts()
   }, [user, authLoading, showToast])
 
-  const handleDownload = (id: string) => {
-    showToast('Download feature coming soon', 'info')
+  const handleDownload = async (id: string) => {
+    const post = userMedia.find((m) => m.id === id)
+    if (post && post.thumbnail) {
+      try {
+        const response = await fetch(post.thumbnail)
+        const blob = await response.blob()
+
+        const blobUrl = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = blobUrl
+        link.download = post.title || 'download'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+
+        window.URL.revokeObjectURL(blobUrl)
+        showToast('Download started', 'success')
+      } catch (err) {
+        showToast('Failed to download file', 'error')
+        console.error('Download error:', err)
+      }
+    }
   }
 
   const handleShare = (id: string) => {
     showToast('Share feature coming soon', 'info')
   }
 
-  const handleDelete = (id: string) => {
-    showToast('Delete feature available from feed', 'info')
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await postsAPI.deletePost(id)
+      if (response.success) {
+        setUserMedia((prev) => prev.filter((item) => item.id !== id))
+        setMediaCount((prev) => prev - 1)
+        showToast('Post deleted successfully', 'success')
+      } else {
+        showToast(response.error?.message || 'Failed to delete post', 'error')
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to delete'
+      showToast(message, 'error')
+    }
   }
 
   if (authLoading) {
