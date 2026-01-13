@@ -37,7 +37,18 @@ export default function UploadPage() {
       // Upload files sequentially
       for (let i = 0; i < filesWithCaptions.length; i++) {
         const { file, caption } = filesWithCaptions[i]
-        const response = await postsAPI.uploadMedia(file, caption)
+
+        const response = await postsAPI.uploadMedia(
+          file,
+          caption,
+          (progress) => {
+            // Calculate overall progress: (file_index + progress/100) / total_files * 100
+            const overallProgress = Math.round(
+              ((i + progress / 100) / filesWithCaptions.length) * 100
+            )
+            setUploadProgress(overallProgress)
+          }
+        )
 
         if (!response.success) {
           const errorMsg = response.error?.message || 'Upload failed'
@@ -47,15 +58,11 @@ export default function UploadPage() {
         }
 
         showToast(`Uploaded ${file.name}`, 'success')
-
-        // Update progress
-        setUploadProgress(
-          Math.round(((i + 1) / filesWithCaptions.length) * 100)
-        )
       }
 
       if (filesWithCaptions.length > 0 && !error) {
         setSuccess(true)
+        setUploadProgress(100)
         showToast('All files uploaded successfully!', 'success')
         // Redirect to feed after successful upload
         setTimeout(() => {

@@ -47,13 +47,20 @@ export const postsAPI = {
    * Upload a media file (image or video)
    * @param file - The media file to upload
    * @param caption - Optional caption for the post
+   * @param onProgress - Optional callback to track upload progress (0-100)
    */
-  uploadMedia: async (file: File, caption: string = '') => {
+  uploadMedia: async (
+    file: File,
+    caption: string = '',
+    onProgress?: (progress: number) => void
+  ) => {
     const formData = new FormData()
     formData.append('file', file)
     formData.append('caption', caption)
 
-    return API.postForm<UploadResponse>('/upload', formData)
+    return API.postForm<UploadResponse>('/upload', formData, {
+      onUploadProgress: onProgress,
+    })
   },
 
   /**

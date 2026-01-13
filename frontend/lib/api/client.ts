@@ -168,8 +168,125 @@ async function apiRequest<T>(
   }
 }
 
-interface ApiRequestOptions extends RequestInit {
+/**
+ * Make an API request with upload progress tracking using XMLHttpRequest
+ */
+async function apiRequestWithProgress<T>(
+  endpoint: string,
+  formData: FormData,
+  options?: ApiRequestOptions
+): Promise<ApiResponse<T>> {
+  const url = `${API_BASE_URL}${endpoint}`
+  const { onUploadProgress } = options || {}
+
+  return new Promise((resolve) => {
+    const xhr = new XMLHttpRequest()
+
+    // Track upload progress
+    if (onUploadProgress) {
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable) {
+          const progress = Math.round((event.loaded / event.total) * 100)
+          onUploadProgress(progress)
+        }
+      })
+    }
+
+    // Handle completion
+    xhr.addEventListener('load', () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const data = JSON.parse(xhr.responseText)
+          resolve({
+            data,
+            success: true,
+          })
+        } catch {
+          resolve({
+            success: false,
+            error: {
+              status: xhr.status,
+              message: 'Failed to parse response',
+            },
+          })
+        }
+      } else {
+        try {
+          const errorData = JSON.parse(xhr.responseText)
+          let errorMessage = 'An error occurred'
+          if (errorData.detail) {
+            if (typeof errorData.detail === 'string') {
+              errorMessage = errorData.detail
+            } else if (Array.isArray(errorData.detail)) {
+              errorMessage = errorData.detail
+                .map((err: unknown) => {
+                  if (typeof err === 'string') return err
+                  if (
+                    typeof err === 'object' &&
+                    err !== null &&
+                    'msg' in err &&
+                    'loc' in err
+                  ) {
+                    const typedErr = err as { msg: string; loc?: string[] }
+                    return `${typedErr.loc?.join('.') || 'field'}: ${
+                      typedErr.msg
+                    }`
+                  }
+                  return 'Validation error'
+                })
+                .join('; ')
+            }
+          }
+          resolve({
+            success: false,
+            error: {
+              status: xhr.status,
+              message: errorMessage,
+            },
+          })
+        } catch {
+          resolve({
+            success: false,
+            error: {
+              status: xhr.status,
+              message: 'An unexpected error occurred',
+            },
+          })
+        }
+      }
+    })
+
+    // Handle errors
+    xhr.addEventListener('error', () => {
+      resolve({
+        success: false,
+        error: {
+          status: 0,
+          message: 'Network error. Is the backend running?',
+        },
+      })
+    })
+
+    // Handle abort
+    xhr.addEventListener('abort', () => {
+      resolve({
+        success: false,
+        error: {
+          status: 0,
+          message: 'Request timeout. Please try again.',
+        },
+      })
+    })
+
+    xhr.open('POST', url)
+    xhr.withCredentials = true
+    xhr.send(formData)
+  })
+}
+
+export interface ApiRequestOptions extends RequestInit {
   includeAuth?: boolean
+  onUploadProgress?: (progress: number) => void
 }
 
 export const API = {
@@ -197,14 +314,7 @@ export const API = {
     endpoint: string,
     formData: FormData,
     options?: ApiRequestOptions
-  ) =>
-    apiRequest<T>(endpoint, {
-      ...options,
-      method: 'POST',
-      body: formData,
-      isFormData: true,
-      includeAuth: true,
-    }),
+  ) => apiRequestWithProgress<T>(endpoint, formData, options),
 }
 
 export { API_BASE_URL }
