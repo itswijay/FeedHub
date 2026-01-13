@@ -20,6 +20,7 @@ function MediaFilter({
 }: MediaFilterProps) {
   const [searchQuery, setSearchQuery] = React.useState('')
   const [selectedType, setSelectedType] = React.useState<string | null>(null)
+  const [selectedSort, setSelectedSort] = React.useState('newest')
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
@@ -92,7 +93,11 @@ function MediaFilter({
 
       {/* Sort */}
       <select
-        onChange={(e) => onSortChange?.(e.target.value)}
+        value={selectedSort}
+        onChange={(e) => {
+          setSelectedSort(e.target.value)
+          onSortChange?.(e.target.value)
+        }}
         className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm"
       >
         <option value="newest">Newest First</option>

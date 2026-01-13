@@ -17,6 +17,7 @@ interface MediaItem {
   size?: string
   type?: 'image' | 'video' | 'document'
   postId?: string
+  createdAt?: string // Raw ISO date for sorting
 }
 
 export default function DashboardPage() {
@@ -59,6 +60,7 @@ export default function DashboardPage() {
               month: 'short',
               day: 'numeric',
             }),
+            createdAt: post.created_at,
             type: (post.file_type === 'video' ? 'video' : 'image') as
               | 'image'
               | 'video'
@@ -69,8 +71,8 @@ export default function DashboardPage() {
           // Apply initial sort (newest first)
           const sorted = [...items].sort(
             (a, b) =>
-              new Date(b.uploadedAt || 0).getTime() -
-              new Date(a.uploadedAt || 0).getTime()
+              new Date(b.createdAt || 0).getTime() -
+              new Date(a.createdAt || 0).getTime()
           )
           setFilteredItems(sorted)
         } else {
@@ -121,26 +123,23 @@ export default function DashboardPage() {
       case 'oldest':
         filtered.sort(
           (a, b) =>
-            new Date(a.uploadedAt || 0).getTime() -
-            new Date(b.uploadedAt || 0).getTime()
+            new Date(a.createdAt || 0).getTime() -
+            new Date(b.createdAt || 0).getTime()
         )
         break
       case 'name':
         filtered.sort((a, b) => a.title.localeCompare(b.title))
         break
       case 'size':
-        filtered.sort((a, b) => {
-          const sizeA = parseInt(a.size || '0')
-          const sizeB = parseInt(b.size || '0')
-          return sizeB - sizeA // Large to small
-        })
+        // Sort by title length as a proxy since size data isn't available from API
+        filtered.sort((a, b) => b.title.length - a.title.length)
         break
       case 'newest':
       default:
         filtered.sort(
           (a, b) =>
-            new Date(b.uploadedAt || 0).getTime() -
-            new Date(a.uploadedAt || 0).getTime()
+            new Date(b.createdAt || 0).getTime() -
+            new Date(a.createdAt || 0).getTime()
         )
         break
     }
