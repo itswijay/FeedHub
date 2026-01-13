@@ -29,9 +29,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Check if user is already logged in on mount
   useEffect(() => {
     const initAuth = async () => {
-      if (authAPI.isAuthenticated()) {
-        await getCurrentUser()
-      } else {
+      try {
+        // Try to fetch current user - if successful, user is authenticated
+        const response = await authAPI.getCurrentUser()
+        if (response.success && response.data) {
+          setUser(response.data)
+          setIsAuthenticated(true)
+        } else {
+          setIsAuthenticated(false)
+        }
+      } catch {
+        // If any error, assume not authenticated
+        setIsAuthenticated(false)
+      } finally {
         setIsLoading(false)
       }
     }
@@ -44,13 +54,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isAuthenticated) return
 
     const tokenCheckInterval = setInterval(async () => {
-      if (authAPI.isAuthenticated()) {
-        // Attempt to validate token by fetching user data
-        const response = await authAPI.getCurrentUser()
-        if (!response.success) {
-          // Token is invalid, logout user
-          logout()
-        }
+      const response = await authAPI.getCurrentUser()
+      if (!response.success) {
+        // Token is invalid, logout user
+        await logout()
       }
     }, 5 * 60 * 1000) // 5 minutes
 
@@ -66,8 +73,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
 
       if (response.success) {
-        await getCurrentUser()
-        return true
+        // Login was successful, now fetch user data
+        const userResponse = await authAPI.getCurrentUser()
+        if (userResponse.success && userResponse.data) {
+          setUser(userResponse.data)
+          setIsAuthenticated(true)
+          return true
+        } else {
+          // Login succeeded but couldn't fetch user - this is an error state
+          console.error('Login succeeded but failed to fetch user data')
+          return false
+        }
       }
 
       return false
@@ -110,7 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setUser(null)
         setIsAuthenticated(false)
-        authAPI.logout()
+        await authAPI.logout()
       }
     } catch (error) {
       console.error('Error fetching user:', error)
@@ -121,8 +137,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const logout = () => {
-    authAPI.logout()
+  const logout = async () => {
+    await authAPI.logout()
     setUser(null)
     setIsAuthenticated(false)
   }

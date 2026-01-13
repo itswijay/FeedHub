@@ -14,45 +14,19 @@ export interface ApiResponse<T> {
 }
 
 /**
- * Get the JWT token from localStorage
+ * Note: Auth token is stored in HTTP-only cookies set by the backend.
+ * The token is automatically included in requests via credentials: 'include'.
+ * No client-side token management needed for security.
  */
-function getToken(): string | null {
-  if (typeof window === 'undefined') return null
-  return localStorage.getItem('authToken')
-}
 
 /**
- * Set the JWT token in localStorage
+ * Build headers for API requests
+ * Note: Auth token is automatically included via HTTP-only cookies
  */
-function setToken(token: string): void {
-  if (typeof window === 'undefined') return
-  localStorage.setItem('authToken', token)
-}
-
-/**
- * Clear the JWT token from localStorage
- */
-function clearToken(): void {
-  if (typeof window === 'undefined') return
-  localStorage.removeItem('authToken')
-}
-
-/**
- * Build headers with authentication token
- */
-function getHeaders(includeAuth: boolean = true): Record<string, string> {
-  const headers: Record<string, string> = {
+function getHeaders(): Record<string, string> {
+  return {
     'Content-Type': 'application/json',
   }
-
-  if (includeAuth) {
-    const token = getToken()
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`
-    }
-  }
-
-  return headers
 }
 
 /**
@@ -62,10 +36,10 @@ async function apiRequest<T>(
   endpoint: string,
   options: RequestInit & { includeAuth?: boolean } = {}
 ): Promise<ApiResponse<T>> {
-  const { includeAuth = true, ...fetchOptions } = options
+  const { ...fetchOptions } = options
 
   const url = `${API_BASE_URL}${endpoint}`
-  const headers = getHeaders(includeAuth)
+  const headers = getHeaders()
 
   try {
     const controller = new AbortController()
@@ -78,6 +52,7 @@ async function apiRequest<T>(
         ...(fetchOptions.headers as Record<string, string>),
       },
       signal: controller.signal,
+      credentials: 'include',
     })
 
     clearTimeout(timeoutId)
@@ -101,10 +76,13 @@ async function apiRequest<T>(
 
     // Handle 401 Unauthorized - likely expired token
     if (response.status === 401) {
-      clearToken()
-      // Redirect to login if in browser
+      // Only redirect to login if not already on a public auth page
       if (typeof window !== 'undefined') {
-        window.location.href = '/login'
+        const currentPath = window.location.pathname
+        const isAuthPage = currentPath === '/login' || currentPath === '/signup'
+        if (!isAuthPage) {
+          window.location.href = '/login'
+        }
       }
       return {
         success: false,
@@ -198,10 +176,6 @@ export const API = {
       body: formData,
       includeAuth: true,
     }),
-
-  getToken,
-  setToken,
-  clearToken,
 }
 
 export { API_BASE_URL }

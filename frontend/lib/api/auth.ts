@@ -38,7 +38,7 @@ export interface UserData {
 export const authAPI = {
   /**
    * Login with email and password
-   * Returns JWT token
+   * Sets HTTP-only cookie via CookieTransport
    */
   login: async (credentials: LoginRequest) => {
     // FastAPI-Users expects form data for login
@@ -46,34 +46,59 @@ export const authAPI = {
     formData.append('username', credentials.username)
     formData.append('password', credentials.password)
 
-    const response = await fetch('http://localhost:8000/auth/jwt/login', {
-      method: 'POST',
-      body: formData,
-      credentials: 'include',
-    })
+    // Use direct fetch to avoid API client's 401 redirect logic
+    try {
+      const response = await fetch('http://localhost:8000/auth/jwt/login', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include', // Important: allows cookies to be set
+      })
 
-    if (response.ok) {
-      const data: LoginResponse = await response.json()
-      API.setToken(data.access_token)
+      if (response.ok) {
+        // For 204 No Content, just return success (cookie is set by server)
+        // For other 2xx responses, try to parse response data
+        let data = { access_token: '', token_type: 'bearer' }
 
-      // Set auth token as a cookie for middleware access
-      document.cookie = `authToken=${data.access_token}; path=/; max-age=${
-        60 * 60 * 24 * 7
-      }; SameSite=Lax`
+        if (response.status !== 204) {
+          try {
+            data = await response.json()
+          } catch {
+            // If no body, use default
+          }
+        }
+
+        return {
+          success: true,
+          data,
+        }
+      }
+
+      // Parse error response
+      let errorData
+      try {
+        errorData = await response.json()
+      } catch {
+        errorData = { detail: 'Login failed' }
+      }
 
       return {
-        success: true,
-        data,
+        success: false,
+        error: {
+          status: response.status,
+          message: errorData.detail || 'Login failed',
+        },
       }
-    }
-
-    const error = await response.json()
-    return {
-      success: false,
-      error: {
-        status: response.status,
-        message: error.detail || 'Login failed',
-      },
+    } catch (error) {
+      return {
+        success: false,
+        error: {
+          status: 0,
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Network error during login',
+        },
+      }
     }
   },
 
@@ -94,15 +119,16 @@ export const authAPI = {
   },
 
   /**
-   * Logout (clear token)
+   * Logout (backend clears HTTP-only cookie)
    */
-  logout: () => {
-    API.clearToken()
-    // Clear the auth token cookie
-    document.cookie = 'authToken=; path=/; max-age=0; SameSite=Lax'
-    return {
-      success: true,
-    }
+  logout: async () => {
+    return API.post<{ message: string }>(
+      '/auth/jwt/logout',
+      {},
+      {
+        includeAuth: true,
+      }
+    )
   },
 
   /**
@@ -132,10 +158,10 @@ export const authAPI = {
   },
 
   /**
-   * Check if token is still valid
+   * Check if user is authenticated by verifying with backend
    */
-  isAuthenticated: () => {
-    const token = API.getToken()
-    return !!token
+  isAuthenticated: async () => {
+    const result = await authAPI.getCurrentUser()
+    return result.success
   },
 }

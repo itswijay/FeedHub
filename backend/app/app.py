@@ -42,6 +42,16 @@ app.include_router(fastapi_users.get_reset_password_router(), prefix='/auth', ta
 app.include_router(fastapi_users.get_verify_router(UserRead), prefix='/auth', tags=['auth'])
 app.include_router(fastapi_users.get_users_router(UserRead, UserUpdate), prefix='/users', tags=['users'])
 
+@app.post('/auth/jwt/login-response', summary="Login with response", tags=['auth'])
+async def login_with_response(
+    user: User = Depends(current_active_user),
+) -> UserRead:
+    """
+    Return authenticated user data after login.
+    Used after the cookie-based login sets the HTTP-only cookie.
+    """
+    return UserRead.model_validate(user)
+
 @app.post('/upload', summary="Upload media file", tags=["media"])
 async def upload_file(
     file: UploadFile = File(...),
