@@ -137,10 +137,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const logout = async () => {
-    await authAPI.logout()
-    setUser(null)
-    setIsAuthenticated(false)
+  const logout = async (): Promise<void> => {
+    try {
+      console.log('AuthContext: Calling logout API...')
+      const result = await authAPI.logout()
+      console.log('AuthContext: Logout API result:', result)
+      if (!result.success) {
+        console.warn(
+          'AuthContext: Logout API returned unsuccessful:',
+          result.error
+        )
+      }
+    } catch (error) {
+      console.error('Error calling logout API:', error)
+    } finally {
+      // Clear auth state regardless of API call result
+      console.log('AuthContext: Clearing auth state...')
+      setUser(null)
+      setIsAuthenticated(false)
+    }
   }
 
   return (

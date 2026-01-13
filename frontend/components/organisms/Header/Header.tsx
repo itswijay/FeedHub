@@ -5,6 +5,8 @@ import { SearchBar } from '@/components/molecules'
 import { Button } from '@/components/atoms'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/atoms'
 import { Menu, LogOut, Settings } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/lib/contexts/AuthContext'
 import { cn } from '@/lib/utils'
 
 interface HeaderProps {
@@ -25,6 +27,23 @@ function Header({
   className,
 }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
+  const { logout } = useAuth()
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    try {
+      console.log('Header: Starting logout...')
+      await logout()
+      console.log('Header: Logout completed, redirecting to login...')
+      router.push('/login')
+      onLogout?.()
+    } catch (error) {
+      console.error('Header: Logout error:', error)
+      // Still redirect even if logout fails
+      console.log('Header: Logout failed, but redirecting anyway...')
+      router.push('/login')
+    }
+  }
 
   return (
     <header
@@ -79,10 +98,7 @@ function Header({
                 </button>
 
                 <button
-                  onClick={() => {
-                    onLogout?.()
-                    setIsMenuOpen(false)
-                  }}
+                  onClick={handleLogout}
                   className="w-full flex items-center gap-2 px-4 py-2 hover:bg-muted text-sm text-destructive"
                 >
                   <LogOut className="size-4" />

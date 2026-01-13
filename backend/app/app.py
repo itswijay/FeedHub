@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, File, UploadFile, Form, Depends
+from fastapi import FastAPI, HTTPException, File, UploadFile, Form, Depends, Response
 from fastapi.middleware.cors import CORSMiddleware
 from .schemas import PostCreate, PostResponse, UserRead, UserCreate, UserUpdate
 from .db import Post, create_db_and_tables, get_async_session, User
@@ -51,6 +51,21 @@ async def login_with_response(
     Used after the cookie-based login sets the HTTP-only cookie.
     """
     return UserRead.model_validate(user)
+
+@app.post('/auth/jwt/logout', summary="Logout and clear cookie", tags=['auth'])
+async def logout(response: Response, user: User = Depends(current_active_user)):
+    """
+    Logout user by clearing the HTTP-only authentication cookie.
+    """
+    response.delete_cookie(
+        key='authToken',
+        path='/',
+        domain=None,
+        secure=False,  # Set to True in production with HTTPS
+        httponly=True,
+        samesite='lax',
+    )
+    return {'message': 'Successfully logged out'}
 
 @app.post('/upload', summary="Upload media file", tags=["media"])
 async def upload_file(

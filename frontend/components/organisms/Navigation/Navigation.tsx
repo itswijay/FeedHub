@@ -98,10 +98,19 @@ function Sidebar({
     setMounted(true)
   }, [])
 
-  const handleLogout = () => {
-    logout()
-    router.push('/login')
-    onLogout?.()
+  const handleLogout = async () => {
+    try {
+      console.log('Starting logout...')
+      await logout()
+      console.log('Logout completed, redirecting to login...')
+      router.push('/login')
+      onLogout?.()
+    } catch (error) {
+      console.error('Logout error:', error)
+      // Still redirect even if logout fails
+      console.log('Logout failed, but redirecting anyway...')
+      router.push('/login')
+    }
   }
 
   const navItems: NavItem[] = [
