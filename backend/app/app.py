@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, File, UploadFile, Form, Depends, Response
 from fastapi.middleware.cors import CORSMiddleware
-from .schemas import PostCreate, PostResponse, UserRead, UserCreate, UserUpdate
+from .schemas import PostCreate, PostResponse, UserRead, UserCreate, UserUpdate, UploadResponse
 from .db import Post, create_db_and_tables, get_async_session, User
 from sqlalchemy.ext.asyncio import AsyncSession
 from contextlib import asynccontextmanager
@@ -67,7 +67,7 @@ async def logout(response: Response, user: User = Depends(current_active_user)):
     )
     return {'message': 'Successfully logged out'}
 
-@app.post('/upload', summary="Upload media file", tags=["media"])
+@app.post('/upload', summary="Upload media file", tags=["media"], response_model=UploadResponse)
 async def upload_file(
     file: UploadFile = File(...),
     caption: str = Form(''),

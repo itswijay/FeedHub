@@ -23,7 +23,11 @@ export interface ApiResponse<T> {
  * Build headers for API requests
  * Note: Auth token is automatically included via HTTP-only cookies
  */
-function getHeaders(): Record<string, string> {
+function getHeaders(isFormData: boolean = false): Record<string, string> {
+  if (isFormData) {
+    // Don't set Content-Type for FormData; the browser will set it with boundary
+    return {}
+  }
   return {
     'Content-Type': 'application/json',
   }
@@ -34,12 +38,12 @@ function getHeaders(): Record<string, string> {
  */
 async function apiRequest<T>(
   endpoint: string,
-  options: RequestInit & { includeAuth?: boolean } = {}
+  options: RequestInit & { includeAuth?: boolean; isFormData?: boolean } = {}
 ): Promise<ApiResponse<T>> {
-  const { ...fetchOptions } = options
+  const { isFormData, ...fetchOptions } = options
 
   const url = `${API_BASE_URL}${endpoint}`
-  const headers = getHeaders()
+  const headers = getHeaders(isFormData)
 
   try {
     const controller = new AbortController()
@@ -74,6 +78,34 @@ async function apiRequest<T>(
       errorData = { detail: 'An unexpected error occurred' }
     }
 
+    // Extract error message - handle both string and Pydantic validation errors
+    let errorMessage = 'An error occurred'
+    if (errorData.detail) {
+      if (typeof errorData.detail === 'string') {
+        errorMessage = errorData.detail
+      } else if (Array.isArray(errorData.detail)) {
+        // Handle Pydantic validation errors (array of error objects)
+        errorMessage = errorData.detail
+          .map((err: unknown) => {
+            if (typeof err === 'string') return err
+            if (
+              typeof err === 'object' &&
+              err !== null &&
+              'msg' in err &&
+              'loc' in err
+            ) {
+              const typedErr = err as { msg: string; loc?: string[] }
+              return `${typedErr.loc?.join('.') || 'field'}: ${typedErr.msg}`
+            }
+            return 'Validation error'
+          })
+          .join('; ')
+      } else if (typeof errorData.detail === 'object') {
+        // Handle other object errors
+        errorMessage = JSON.stringify(errorData.detail)
+      }
+    }
+
     // Handle 401 Unauthorized - likely expired token
     if (response.status === 401) {
       // Only redirect to login if not already on a public auth page
@@ -89,7 +121,7 @@ async function apiRequest<T>(
         error: {
           status: 401,
           message: 'Session expired. Please login again.',
-          detail: errorData.detail,
+          detail: typeof errorData.detail === 'string' ? errorData.detail : '',
         },
       }
     }
@@ -98,8 +130,8 @@ async function apiRequest<T>(
       success: false,
       error: {
         status: response.status,
-        message: errorData.detail || 'An error occurred',
-        detail: errorData.detail,
+        message: errorMessage,
+        detail: typeof errorData.detail === 'string' ? errorData.detail : '',
       },
     }
   } catch (error) {
@@ -169,11 +201,8 @@ export const API = {
     apiRequest<T>(endpoint, {
       ...options,
       method: 'POST',
-      headers: {
-        // Don't set Content-Type for FormData; the browser will set it with boundary
-        ...(options?.headers as Record<string, string>),
-      },
       body: formData,
+      isFormData: true,
       includeAuth: true,
     }),
 }

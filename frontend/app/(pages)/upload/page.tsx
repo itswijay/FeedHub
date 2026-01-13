@@ -14,6 +14,11 @@ import {
 import { postsAPI } from '@/lib/api'
 import { useToast } from '@/lib/contexts/ToastContext'
 
+interface FileWithCaption {
+  file: File
+  caption: string
+}
+
 export default function UploadPage() {
   const router = useRouter()
   const { showToast } = useToast()
@@ -22,7 +27,7 @@ export default function UploadPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
-  const handleUpload = async (files: File[]) => {
+  const handleUpload = async (filesWithCaptions: FileWithCaption[]) => {
     setError(null)
     setSuccess(false)
     setIsUploading(true)
@@ -30,12 +35,9 @@ export default function UploadPage() {
 
     try {
       // Upload files sequentially
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i]
-        const response = await postsAPI.uploadMedia(
-          file,
-          `Uploaded: ${file.name}`
-        )
+      for (let i = 0; i < filesWithCaptions.length; i++) {
+        const { file, caption } = filesWithCaptions[i]
+        const response = await postsAPI.uploadMedia(file, caption)
 
         if (!response.success) {
           const errorMsg = response.error?.message || 'Upload failed'
@@ -47,10 +49,12 @@ export default function UploadPage() {
         showToast(`Uploaded ${file.name}`, 'success')
 
         // Update progress
-        setUploadProgress(Math.round(((i + 1) / files.length) * 100))
+        setUploadProgress(
+          Math.round(((i + 1) / filesWithCaptions.length) * 100)
+        )
       }
 
-      if (files.length > 0 && !error) {
+      if (filesWithCaptions.length > 0 && !error) {
         setSuccess(true)
         showToast('All files uploaded successfully!', 'success')
         // Redirect to feed after successful upload

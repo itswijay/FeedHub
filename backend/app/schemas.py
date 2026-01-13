@@ -1,6 +1,7 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from fastapi_users import schemas
 import uuid
+from datetime import datetime
 
 class PostCreate(BaseModel):
     title: str
@@ -9,6 +10,18 @@ class PostCreate(BaseModel):
 class PostResponse(BaseModel):
     title: str
     content: str
+
+class UploadResponse(BaseModel):
+    """Response schema for file upload endpoint"""
+    id: uuid.UUID
+    user_id: uuid.UUID
+    caption: str
+    url: str
+    file_type: str
+    file_name: str
+    created_at: datetime
+    
+    model_config = ConfigDict(from_attributes=True)
 
 class UserRead(schemas.BaseUser[uuid.UUID]):
     pass
