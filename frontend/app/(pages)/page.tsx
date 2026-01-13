@@ -26,6 +26,7 @@ export default function DashboardPage() {
   const [filteredItems, setFilteredItems] = React.useState<MediaItem[]>([])
   const [searchQuery, setSearchQuery] = React.useState('')
   const [selectedType, setSelectedType] = React.useState<string | null>(null)
+  const [sortBy, setSortBy] = React.useState<string>('newest')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<{
@@ -65,7 +66,13 @@ export default function DashboardPage() {
             postId: post.id,
           }))
           setMediaItems(items)
-          setFilteredItems(items)
+          // Apply initial sort (newest first)
+          const sorted = [...items].sort(
+            (a, b) =>
+              new Date(b.uploadedAt || 0).getTime() -
+              new Date(a.uploadedAt || 0).getTime()
+          )
+          setFilteredItems(sorted)
         } else {
           setError(response.error?.message || 'Failed to load feed')
         }
@@ -81,25 +88,61 @@ export default function DashboardPage() {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query)
-    filterMedia(query, selectedType)
+    filterMedia(query, selectedType, sortBy)
   }
 
   const handleTypeFilter = (type: string | null) => {
     setSelectedType(type)
-    filterMedia(searchQuery, type)
+    filterMedia(searchQuery, type, sortBy)
   }
 
-  const filterMedia = (query: string, type: string | null) => {
-    let filtered = mediaItems
+  const handleSortChange = (sort: string) => {
+    setSortBy(sort)
+    filterMedia(searchQuery, selectedType, sort)
+  }
 
+  const filterMedia = (query: string, type: string | null, sort: string) => {
+    let filtered = [...mediaItems]
+
+    // Apply search filter by caption
     if (query) {
       filtered = filtered.filter((item) =>
         item.title.toLowerCase().includes(query.toLowerCase())
       )
     }
 
+    // Apply type filter
     if (type) {
       filtered = filtered.filter((item) => item.type === type)
+    }
+
+    // Apply sorting
+    switch (sort) {
+      case 'oldest':
+        filtered.sort(
+          (a, b) =>
+            new Date(a.uploadedAt || 0).getTime() -
+            new Date(b.uploadedAt || 0).getTime()
+        )
+        break
+      case 'name':
+        filtered.sort((a, b) => a.title.localeCompare(b.title))
+        break
+      case 'size':
+        filtered.sort((a, b) => {
+          const sizeA = parseInt(a.size || '0')
+          const sizeB = parseInt(b.size || '0')
+          return sizeB - sizeA // Large to small
+        })
+        break
+      case 'newest':
+      default:
+        filtered.sort(
+          (a, b) =>
+            new Date(b.uploadedAt || 0).getTime() -
+            new Date(a.uploadedAt || 0).getTime()
+        )
+        break
     }
 
     setFilteredItems(filtered)
@@ -113,11 +156,6 @@ export default function DashboardPage() {
   const handleDownload = (id: string) => {
     console.log('Download media:', id)
     // TODO: Implement download
-  }
-
-  const handleShare = (id: string) => {
-    console.log('Share media:', id)
-    // TODO: Open share dialog
   }
 
   const handleDeleteClick = (id: string) => {
@@ -152,11 +190,6 @@ export default function DashboardPage() {
     }
   }
 
-  const handleSortChange = (sort: string) => {
-    console.log('Sort by:', sort)
-    // TODO: Implement sorting
-  }
-
   return (
     <>
       <FeedLayout
@@ -183,7 +216,6 @@ export default function DashboardPage() {
               loading={isLoading}
               onView={handleView}
               onDownload={handleDownload}
-              onShare={handleShare}
               onDelete={handleDeleteClick}
             />
           </div>
